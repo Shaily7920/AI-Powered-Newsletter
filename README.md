@@ -1,4 +1,5 @@
 AI-Powered Personalized Newsletter Generator
+
 📌 Project Overview
 This project is an AI-powered personalized newsletter generator that fetches articles from various RSS feeds, categorizes them using Natural Language Processing (NLP) and Generative AI models, and curates newsletters based on user preferences. The newsletter is displayed on a web app and also sent via email.
 
@@ -12,9 +13,13 @@ This project is an AI-powered personalized newsletter generator that fetches art
 
 🎯 User Personas & Interests
 Alex Parker (Tech Enthusiast) – AI, cybersecurity, blockchain, startups, programming
+
 Priya Sharma (Finance & Business Guru) – Global markets, fintech, cryptocurrency, economics
+
 Marco Rossi (Sports Journalist) – Football, F1, NBA, Olympic sports, esports
+
 Lisa Thompson (Entertainment Buff) – Movies, celebrity news, TV shows, music, books
+
 David Martinez (Science & Space Nerd) – Space exploration, AI, biotech, physics, renewable energy
 
 📂 Folder Structure
