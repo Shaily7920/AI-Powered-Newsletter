@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Personalized Newsletter</title>
+</head>
+<body>
+    <h1>Personalized Newsletter</h1>
+
+    <h2>Summary</h2>
+    <p>Here are the latest top articles curated for your interests: {{ interests|join(', ') }}.</p>
+
+    {% for category in interests %}
+        <h2>{{ category.capitalize() }}</h2>
+        {% for article in articles %}
+            {% if article.category == category %}
+                <h3><a href="{{ article.link }}" target="_blank">{{ article.title }}</a></h3>
+                <p>{{ article.summary }}</p>
+                <hr>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+</body>
+</html>

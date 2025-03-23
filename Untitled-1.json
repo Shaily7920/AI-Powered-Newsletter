@@ -1,0 +1,321 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import feedparser\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import openai\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import spacy\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import markdown\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from flask import Flask, render_template, request, jsonify\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from apscheduler.schedulers.background import BackgroundScheduler\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Traceback (most recent call last):\n",
+       "  File \"c:\\Users\\amish\\.vscode\\extensions\\ms-python.python-2025.2.0-win32-x64\\python_files\\python_server.py\", line 133, in exec_user_input\n",
+       "    retval = callable_(user_input, user_globals)\n",
+       "  File \"<string>\", line 1, in <module>\n",
+       "  File \"C:\\Users\\amish\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\spacy\\__init__.py\", line 51, in load\n",
+       "    return util.load_model(\n",
+       "  File \"C:\\Users\\amish\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\spacy\\util.py\", line 472, in load_model\n",
+       "    raise IOError(Errors.E050.format(name=name))\n",
+       "OSError: [E050] Can't find model 'en_core_web_sm'. It doesn't seem to be a Python package or a valid path to a data directory.\n",
+       "\n"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "nlp = spacy.load(\"en_core_web_sm\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "nlp = spacy.load(\"en_core_web_sm\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "rss_feeds = {\n",
+    "    \"technology\": [\"https://techcrunch.com/feed/\", \"https://www.wired.com/feed/\"],\n",
+    "    \"finance\": [\"https://www.bloomberg.com/feed/\", \"https://www.coindesk.com/arc/outboundfeeds/rss/\"],\n",
+    "    \"sports\": [\"https://www.espn.com/espn/rss/news\"],\n",
+    "    \"entertainment\": [\"https://variety.com/feed/\", \"https://www.billboard.com/feed/\"],\n",
+    "    \"science\": [\"https://www.nasa.gov/rss/dyn/breaking_news.rss\"]\n",
+    "}\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "persona_keywords = {\n",
+    "    \"Alex Parker\": [\"AI\", \"cybersecurity\", \"blockchain\", \"startups\", \"programming\"],\n",
+    "    \"Priya Sharma\": [\"finance\", \"markets\", \"fintech\", \"cryptocurrency\", \"economics\"],\n",
+    "    \"Marco Rossi\": [\"football\", \"F1\", \"NBA\", \"Olympics\", \"esports\"],\n",
+    "    \"Lisa Thompson\": [\"movies\", \"celebrity\", \"TV shows\", \"music\", \"books\"],\n",
+    "    \"David Martinez\": [\"space\", \"biotech\", \"physics\", \"renewable energy\"]\n",
+    "}\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "openai.api_key = os.getenv(\"OPENAI_API_KEY\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "app = Flask('CurateAI')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def fetch_articles():\n",
+    "    articles = []\n",
+    "    for category, urls in rss_feeds.items():\n",
+    "        for url in urls:\n",
+    "            feed = feedparser.parse(url)\n",
+    "            for entry in feed.entries:\n",
+    "                articles.append({\n",
+    "                    \"title\": entry.title,\n",
+    "                    \"link\": entry.link,\n",
+    "                    \"summary\": entry.summary if \"summary\" in entry else \"\",\n",
+    "                    \"category\": category\n",
+    "                })\n",
+    "    return articles\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def classify_article(article):\n",
+    "    doc = nlp(article[\"title\"] + \" \" + article[\"summary\"])\n",
+    "    scores = {persona: sum(1 for word in persona_keywords[persona] if word.lower() in doc.text.lower())\n",
+    "              for persona in persona_keywords}\n",
+    "    return max(scores, key=scores.get)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def summarize_article(article_text):\n",
+    "    response = openai.ChatCompletion.create(\n",
+    "        model=\"gpt-4\",\n",
+    "        messages=[{\"role\": \"user\", \"content\": f\"Summarize this article: {article_text}\"}]\n",
+    "    )\n",
+    "    return response[\"choices\"][0][\"message\"][\"content\"]\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def generate_newsletter(persona, articles):\n",
+    "    newsletter = f\"# Personalized Newsletter for {persona}\\n\\n\"\n",
+    "    newsletter += \"## Top Stories\\n\"\n",
+    "    for article in articles:\n",
+    "        newsletter += f\"- **{article['title']}**\\n  *{article['summary']}*\\n  [Read more]({article['link']})\\n\\n\"\n",
+    "    return newsletter\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def home():\n",
+    "    return render_template('index.html')\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def generate():\n",
+    "    articles = fetch_articles()\n",
+    "    for article in articles:\n",
+    "        article[\"assigned_persona\"] = classify_article(article)\n",
+    "        article[\"summary\"] = summarize_article(article[\"summary\"])\n",
+    "    newsletters = {}\n",
+    "    for persona in persona_keywords.keys():\n",
+    "        persona_articles = [a for a in articles if a[\"assigned_persona\"] == persona]\n",
+    "        newsletters[persona] = generate_newsletter(persona, persona_articles)\n",
+    "        with open(f\"newsletters/{persona.replace(' ', '_').lower()}_newsletter.md\", \"w\", encoding=\"utf-8\") as f:\n",
+    "            f.write(newsletters[persona])\n",
+    "    return jsonify({\"message\": \"Newsletters Generated!\"})\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "scheduler = BackgroundScheduler()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "generate (trigger: interval[1 day, 0:00:00], pending)\n"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "scheduler.add_job(func=generate, trigger='interval', hours=24)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "scheduler.start()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "if __name__ == '__main__':\n",
+    "    os.makedirs(\"newsletters\", exist_ok=True)\n",
+    "    app.run(debug=True)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "app.run(debug=True)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

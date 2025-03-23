@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter Preferences</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="form-container">
+        <h2>Select Your Preferences</h2>
+        <form action="/submit" method="post">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="interests">Select Your Interest:</label>
+            <select id="interests" name="interests">
+                <option value="Tech Enthusiast">Tech Enthusiast</option>
+                <option value="Finance & Business Guru">Finance & Business Guru</option>
+                <option value="Sports Journalist">Sports Journalist</option>
+                <option value="Entertainment Buff">Entertainment Buff</option>
+                <option value="Science & Space Nerd">Science & Space Nerd</option>
+            </select>
+            
+            <button type="submit" class="submit-btn">Subscribe</button>
+        </form>
+    </div>
+</body>
+</html>
